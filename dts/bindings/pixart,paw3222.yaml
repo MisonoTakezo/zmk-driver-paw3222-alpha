@@ -20,11 +20,11 @@ properties:
     required: false
     description: GPIO connected to the power control pin.
 
-  snipe-layers:
-    type: array
+  snipe-layer:
+    type: int
     required: false
     description: |
-      List of layer numbers to switch between using the snipes-layers feature.
+      Layer number for snipe mode (high precision cursor movement).
 
   scroll-layer:
     type: int
@@ -37,6 +37,12 @@ properties:
     description: |
       CPI resolution for the sensor. This can also be changed in runtime using
       the paw32xx_set_resolution() API.
+
+  snipe-cpi:
+    type: int
+    required: false
+    description: |
+      CPI resolution for snipe mode. If not specified, uses the same value as res-cpi.
 
   force-awake:
     type: boolean

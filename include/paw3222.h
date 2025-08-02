@@ -43,8 +43,7 @@ struct paw32xx_config {
     struct gpio_dt_spec irq_gpio;
     struct gpio_dt_spec power_gpio;
     int32_t scroll_layer;
-    size_t snipe_layers_len;
-    int32_t *snipe_layers;
+    int32_t snipe_layer;
     int16_t res_cpi;
     int16_t snipe_cpi;
     bool force_awake;
