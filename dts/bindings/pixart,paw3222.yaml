@@ -26,17 +26,11 @@ properties:
     description: |
       List of layer numbers to switch between using the snipes-layers feature.
 
-  scroll-layers:
-    type: array
+  scroll-layer:
+    type: int
     required: false
     description: |
-      List of layer numbers to switch between using the scroll-layers feature.
-
-  scroll-horizontal-layers:
-    type: array
-    required: false
-    description: |
-      List of layer numbers to switch between using the horizontal scroll feature.
+      Layer number for auto scroll mode (automatically detects vertical/horizontal based on movement direction).
 
   res-cpi:
     type: int
