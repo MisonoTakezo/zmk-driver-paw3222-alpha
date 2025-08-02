@@ -327,7 +327,8 @@ static void paw32xx_motion_work_handler(struct k_work *work) {
             if (abs(tx) > cfg->scroll_tick || abs(ty) > cfg->scroll_tick) {
                 if (abs(tx) > abs(ty)) {
                     // Horizontal scroll
-                    input_report_rel(data->dev, INPUT_REL_HWHEEL, (tx > 0 ? 1 : -1), true, K_FOREVER);
+                    int scroll_direction = (tx > 0 ? -1 : 1);
+                    input_report_rel(data->dev, INPUT_REL_HWHEEL, scroll_direction, true, K_FOREVER);
                 } else {
                     // Vertical scroll
                     input_report_rel(data->dev, INPUT_REL_WHEEL, (ty > 0 ? 1 : -1), true, K_FOREVER);
