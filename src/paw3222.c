@@ -315,11 +315,17 @@ static void paw32xx_motion_work_handler(struct k_work *work) {
     }
 
     switch (input_mode) {
-        case PAW32XX_MOVE: // Normal cursor movement
-        case PAW32XX_SNIPE: { // High-precision cursor movement
-            // Send X/Y movement
+        case PAW32XX_MOVE: { // Normal cursor movement
             input_report_rel(data->dev, INPUT_REL_X, tx, false, K_NO_WAIT);
             input_report_rel(data->dev, INPUT_REL_Y, ty, true, K_FOREVER);
+            break;
+        }
+        case PAW32XX_SNIPE: { // High-precision cursor movement
+            // Scale movement to 1/3 for snipe mode
+            int16_t snipe_tx = tx / 3;
+            int16_t snipe_ty = ty / 3;
+            input_report_rel(data->dev, INPUT_REL_X, snipe_tx, false, K_NO_WAIT);
+            input_report_rel(data->dev, INPUT_REL_Y, snipe_ty, true, K_FOREVER);
             break;
         }
         case PAW32XX_SCROLL: { // Auto scroll (both vertical and horizontal based on movement direction)
