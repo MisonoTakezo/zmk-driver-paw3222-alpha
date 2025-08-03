@@ -329,16 +329,23 @@ static void paw32xx_motion_work_handler(struct k_work *work) {
             break;
         }
         case PAW32XX_SCROLL: { // Auto scroll (both vertical and horizontal based on movement direction)
-            // Determine scroll direction based on the larger movement
-            if (abs(tx) > cfg->scroll_tick || abs(ty) > cfg->scroll_tick) {
-                if (abs(tx) > abs(ty)) {
-                    // Horizontal scroll
-                    int scroll_direction = (tx > 0 ? -1 : 1);
-                    input_report_rel(data->dev, INPUT_REL_HWHEEL, scroll_direction, true, K_FOREVER);
-                } else {
-                    // Vertical scroll
-                    input_report_rel(data->dev, INPUT_REL_WHEEL, (ty > 0 ? 1 : -1), true, K_FOREVER);
-                }
+            // Accumulate scroll delta
+            data->scroll_delta_x += tx;
+            data->scroll_delta_y += ty;
+            
+            // Generate scroll events when accumulated delta exceeds threshold
+            if (abs(data->scroll_delta_x) >= cfg->scroll_tick) {
+                int scroll_steps = data->scroll_delta_x / cfg->scroll_tick;
+                // Horizontal scroll (reversed for natural scrolling feel)
+                input_report_rel(data->dev, INPUT_REL_HWHEEL, -scroll_steps, true, K_FOREVER);
+                data->scroll_delta_x -= scroll_steps * cfg->scroll_tick;
+            }
+            
+            if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
+                int scroll_steps = data->scroll_delta_y / cfg->scroll_tick;
+                // Vertical scroll
+                input_report_rel(data->dev, INPUT_REL_WHEEL, scroll_steps, true, K_FOREVER);
+                data->scroll_delta_y -= scroll_steps * cfg->scroll_tick;
             }
             break;
         }
@@ -420,6 +427,8 @@ static int paw32xx_init(const struct device *dev) {
     int ret;
 
     data->current_cpi = -1;
+    data->scroll_delta_x = 0;
+    data->scroll_delta_y = 0;
 
     if (!spi_is_ready_dt(&cfg->spi)) {
         LOG_ERR("%s is not ready", cfg->spi.bus->name);
