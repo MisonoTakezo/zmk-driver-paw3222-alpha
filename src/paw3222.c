@@ -335,14 +335,23 @@ static void paw32xx_motion_work_handler(struct k_work *work) {
                                zmk_hid_keyboard_is_pressed(HID_USAGE_KEY_KEYBOARD_RIGHTSHIFT);
             
             if (shift_pressed) {
-                // Zoom mode: Use vertical movement for zoom (positive = zoom in, negative = zoom out)
+                // Zoom mode: Use vertical movement for macOS Accessibility Zoom
+                // This automatically sends Option+Command+Scroll for system-wide zoom
                 data->scroll_delta_y += ty;
                 
                 if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
                     int zoom_steps = data->scroll_delta_y / cfg->scroll_tick;
                     
-                    // Use wheel scroll for zoom (Mac interprets Cmd+Shift+Scroll as zoom)
-                    input_report_rel(data->dev, INPUT_REL_WHEEL, zoom_steps, true, K_FOREVER);
+                    // Send Option+Command key press
+                    input_report_key(data->dev, INPUT_KEY_LEFTALT, 1, true, K_NO_WAIT);
+                    input_report_key(data->dev, INPUT_KEY_LEFTMETA, 1, true, K_NO_WAIT);
+                    
+                    // Send wheel scroll for zoom
+                    input_report_rel(data->dev, INPUT_REL_WHEEL, zoom_steps, true, K_NO_WAIT);
+                    
+                    // Release Option+Command keys
+                    input_report_key(data->dev, INPUT_KEY_LEFTALT, 0, true, K_NO_WAIT);
+                    input_report_key(data->dev, INPUT_KEY_LEFTMETA, 0, true, K_FOREVER);
                     
                     data->scroll_delta_y -= zoom_steps * cfg->scroll_tick;
                 }

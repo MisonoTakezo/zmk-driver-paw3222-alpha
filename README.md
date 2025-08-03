@@ -71,14 +71,27 @@ Configure the sensor in your shield or board config file (`.overlay` or `.dtsi`)
   - **Normal operation**: Automatically detects movement direction and scrolls accordingly
     - Larger vertical movement → vertical scroll
     - Larger horizontal movement → horizontal scroll
-  - **Zoom operation**: Hold Shift key + vertical trackball movement for zoom
+  - **Zoom operation**: Hold Shift key + vertical trackball movement for macOS system-wide zoom
     - Up movement → zoom in
     - Down movement → zoom out
-    - **On Mac**: Combine with Cmd key (Cmd+Shift+Scroll) for zoom functionality
+    - **Automatically sends Option+Command+Scroll** for macOS Accessibility Zoom
+    - **Requires macOS Accessibility Zoom to be enabled** in System Settings
 - In snipe mode (`snipe-layer`), the sensor uses the specified `snipe-cpi` for high precision movement.
 - You can adjust CPI (resolution) at runtime using the API (see below).
 - Use `rotation` to match the sensor's physical orientation.
 - Configure `scroll-tick` to tune scroll sensitivity.
+
+---
+
+## macOS Setup for System-wide Zoom
+
+To enable system-wide zoom functionality on macOS:
+
+1. Open **System Settings** (System Preferences on older macOS)
+2. Go to **Accessibility** → **Zoom**
+3. Enable **Use scroll gesture with modifier keys to zoom**
+4. Set modifier keys to **Option + Command** (⌥ + ⌘)
+5. The trackball's Shift + vertical movement will now trigger system-wide zoom
 
 ---
 
