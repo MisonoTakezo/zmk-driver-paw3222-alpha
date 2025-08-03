@@ -35,8 +35,7 @@ Configure the sensor in your shield or board config file (`.overlay` or `.dtsi`)
         res-cpi = <800>;               /* メインCPI: 800 */
         snipe-cpi = <400>;             /* スナイプ時のCPI: 400 */
         snipe-layer = <1>;             /* スナイプレイヤー: 1 */
-        scroll-layer = <3>;            /* スクロールレイヤー: 3 */
-        zoom-layer = <2>;              /* ズームレイヤー: 2 */
+        scroll-layer = <3>;            /* スクロールレイヤー: 3 (Shift押下でズーム) */
 
         scroll-tick = <10>;            /* スクロール感度 */
         
@@ -61,19 +60,22 @@ Configure the sensor in your shield or board config file (`.overlay` or `.dtsi`)
 | rotation                 | int           | No       | Physical rotation of the sensor in degrees. (0, 90, 180, 270)                                                             |
 | scroll-tick              | int           | No       | Threshold for scroll movement (delta value above which scroll is triggered).                                              |
 | snipe-layer              | int           | No       | Layer number for snipe mode (high precision cursor movement).                                                             |
-| scroll-layer             | int           | No       | Layer number for auto scroll mode (automatically detects vertical/horizontal based on movement direction).               |
-| zoom-layer               | int           | No       | Layer number for zoom mode (pinch gesture emulation for Mac). Requires Cmd key to be held on keyboard.                  |
+| scroll-layer             | int           | No       | Layer number for auto scroll mode. Hold Shift key during scroll mode for zoom functionality.                             |
 
 ---
 
 ## Usage
 
-- The driver automatically switches input mode (move, scroll, snipe, zoom) based on the active ZMK layer and your devicetree configuration.
-- In scroll mode (`scroll-layer`), the driver automatically detects the movement direction and scrolls accordingly:
-  - Larger vertical movement → vertical scroll
-  - Larger horizontal movement → horizontal scroll
+- The driver automatically switches input mode (move, scroll, snipe) based on the active ZMK layer and your devicetree configuration.
+- In scroll mode (`scroll-layer`):
+  - **Normal operation**: Automatically detects movement direction and scrolls accordingly
+    - Larger vertical movement → vertical scroll
+    - Larger horizontal movement → horizontal scroll
+  - **Zoom operation**: Hold Shift key + vertical trackball movement for zoom
+    - Up movement → zoom in
+    - Down movement → zoom out
+    - **On Mac**: Combine with Cmd key (Cmd+Shift+Scroll) for zoom functionality
 - In snipe mode (`snipe-layer`), the sensor uses the specified `snipe-cpi` for high precision movement.
-- In zoom mode (`zoom-layer`), vertical trackball movement generates scroll events. **Hold Cmd key on keyboard** for zoom functionality on Mac.
 - You can adjust CPI (resolution) at runtime using the API (see below).
 - Use `rotation` to match the sensor's physical orientation.
 - Configure `scroll-tick` to tune scroll sensitivity.

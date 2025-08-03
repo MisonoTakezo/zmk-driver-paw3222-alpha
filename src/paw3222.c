@@ -25,6 +25,7 @@
 #include <zephyr/sys/util_macro.h>
 
 #include <zmk/keymap.h>
+#include <zmk/hid.h>
 
 #include "../include/paw3222.h"
 
@@ -72,7 +73,6 @@ enum paw32xx_input_mode {
     PAW32XX_MOVE,
     PAW32XX_SCROLL,                // Auto scroll (both vertical and horizontal)
     PAW32XX_SNIPE,                 // High-precision cursor movement (snipe)
-    PAW32XX_ZOOM,                  // Zoom in/out (pinch gesture emulation)
 };
 
 
@@ -198,10 +198,6 @@ static enum paw32xx_input_mode get_input_mode_for_current_layer(const struct dev
     const struct paw32xx_config *cfg = dev->config;
     uint8_t curr_layer = zmk_keymap_highest_layer_active();
 
-    // Zoom in/out (pinch gesture emulation)
-    if (cfg->zoom_enabled && curr_layer == cfg->zoom_layer) {
-        return PAW32XX_ZOOM;
-    }
     // Auto scroll (both vertical and horizontal based on movement direction)
     if (cfg->scroll_enabled && curr_layer == cfg->scroll_layer) {
         return PAW32XX_SCROLL;
@@ -333,40 +329,42 @@ static void paw32xx_motion_work_handler(struct k_work *work) {
             input_report_rel(data->dev, INPUT_REL_Y, snipe_ty, true, K_FOREVER);
             break;
         }
-        case PAW32XX_ZOOM: { // Zoom in/out (pinch gesture emulation)
-            // Use vertical movement for zoom (positive = zoom in, negative = zoom out)
-            // Accumulate zoom delta for smoother operation
-            data->scroll_delta_y += ty;
-            
-            if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
-                int zoom_steps = data->scroll_delta_y / cfg->scroll_tick;
-                
-                // Use wheel scroll for zoom (Mac interprets Cmd+Scroll as zoom)
-                // Note: The actual Cmd key should be pressed on the keyboard
-                input_report_rel(data->dev, INPUT_REL_WHEEL, zoom_steps, true, K_FOREVER);
-                
-                data->scroll_delta_y -= zoom_steps * cfg->scroll_tick;
-            }
-            break;
-        }
         case PAW32XX_SCROLL: { // Auto scroll (both vertical and horizontal based on movement direction)
-            // Accumulate scroll delta
-            data->scroll_delta_x += tx;
-            data->scroll_delta_y += ty;
+            // Check if Shift key is pressed for zoom functionality
+            bool shift_pressed = zmk_hid_keyboard_is_pressed(HID_USAGE_KEY_KEYBOARD_LEFTSHIFT) ||
+                               zmk_hid_keyboard_is_pressed(HID_USAGE_KEY_KEYBOARD_RIGHTSHIFT);
             
-            // Generate scroll events when accumulated delta exceeds threshold
-            if (abs(data->scroll_delta_x) >= cfg->scroll_tick) {
-                int scroll_steps = data->scroll_delta_x / cfg->scroll_tick;
-                // Horizontal scroll (reversed for natural scrolling feel)
-                input_report_rel(data->dev, INPUT_REL_HWHEEL, -scroll_steps, true, K_FOREVER);
-                data->scroll_delta_x -= scroll_steps * cfg->scroll_tick;
-            }
-            
-            if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
-                int scroll_steps = data->scroll_delta_y / cfg->scroll_tick;
-                // Vertical scroll
-                input_report_rel(data->dev, INPUT_REL_WHEEL, scroll_steps, true, K_FOREVER);
-                data->scroll_delta_y -= scroll_steps * cfg->scroll_tick;
+            if (shift_pressed) {
+                // Zoom mode: Use vertical movement for zoom (positive = zoom in, negative = zoom out)
+                data->scroll_delta_y += ty;
+                
+                if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
+                    int zoom_steps = data->scroll_delta_y / cfg->scroll_tick;
+                    
+                    // Use wheel scroll for zoom (Mac interprets Cmd+Shift+Scroll as zoom)
+                    input_report_rel(data->dev, INPUT_REL_WHEEL, zoom_steps, true, K_FOREVER);
+                    
+                    data->scroll_delta_y -= zoom_steps * cfg->scroll_tick;
+                }
+            } else {
+                // Normal scroll mode: Accumulate scroll delta
+                data->scroll_delta_x += tx;
+                data->scroll_delta_y += ty;
+                
+                // Generate scroll events when accumulated delta exceeds threshold
+                if (abs(data->scroll_delta_x) >= cfg->scroll_tick) {
+                    int scroll_steps = data->scroll_delta_x / cfg->scroll_tick;
+                    // Horizontal scroll (reversed for natural scrolling feel)
+                    input_report_rel(data->dev, INPUT_REL_HWHEEL, -scroll_steps, true, K_FOREVER);
+                    data->scroll_delta_x -= scroll_steps * cfg->scroll_tick;
+                }
+                
+                if (abs(data->scroll_delta_y) >= cfg->scroll_tick) {
+                    int scroll_steps = data->scroll_delta_y / cfg->scroll_tick;
+                    // Vertical scroll
+                    input_report_rel(data->dev, INPUT_REL_WHEEL, scroll_steps, true, K_FOREVER);
+                    data->scroll_delta_y -= scroll_steps * cfg->scroll_tick;
+                }
             }
             break;
         }
@@ -580,13 +578,11 @@ static int paw32xx_pm_action(const struct device *dev, enum pm_device_action act
         .power_gpio = GPIO_DT_SPEC_INST_GET_OR(n, power_gpios, {0}), \
         .scroll_layer = DT_INST_PROP_OR(n, scroll_layer, -1), \
         .snipe_layer = DT_INST_PROP_OR(n, snipe_layer, -1), \
-        .zoom_layer = DT_INST_PROP_OR(n, zoom_layer, -1), \
         .res_cpi = DT_INST_PROP_OR(n, res_cpi, CONFIG_PAW3222_RES_CPI), \
         .snipe_cpi = DT_INST_PROP_OR(n, snipe_cpi, DT_INST_PROP_OR(n, res_cpi, CONFIG_PAW3222_RES_CPI)), \
         .force_awake = DT_INST_PROP(n, force_awake), \
         .scroll_enabled = DT_INST_NODE_HAS_PROP(n, scroll_layer),  \
         .snipe_enabled = DT_INST_NODE_HAS_PROP(n, snipe_layer), \
-        .zoom_enabled = DT_INST_NODE_HAS_PROP(n, zoom_layer), \
         .rotation = DT_INST_PROP_OR(n, rotation, CONFIG_PAW32XX_SENSOR_ROTATION),     \
         .scroll_tick = DT_INST_PROP_OR(n, scroll_tick, CONFIG_PAW32XX_SCROLL_TICK)   \
     }; \

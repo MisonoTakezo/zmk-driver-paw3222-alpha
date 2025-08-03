@@ -31,12 +31,7 @@ properties:
     required: false
     description: |
       Layer number for auto scroll mode (automatically detects vertical/horizontal based on movement direction).
-
-  zoom-layer:
-    type: int
-    required: false
-    description: |
-      Layer number for zoom mode (pinch gesture emulation for Mac).
+      When Shift key is pressed during scroll mode, zoom functionality is activated.
 
   res-cpi:
     type: int
