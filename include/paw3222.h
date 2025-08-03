@@ -44,11 +44,13 @@ struct paw32xx_config {
     struct gpio_dt_spec power_gpio;
     int32_t scroll_layer;
     int32_t snipe_layer;
+    int32_t zoom_layer;
     int16_t res_cpi;
     int16_t snipe_cpi;
     bool force_awake;
     bool scroll_enabled;
     bool snipe_enabled;
+    bool zoom_enabled;
     uint8_t rotation;      // 追加: 回転角度（0, 90, 180, 270）
     uint8_t scroll_tick;   // 追加: スクロールtick
 };
